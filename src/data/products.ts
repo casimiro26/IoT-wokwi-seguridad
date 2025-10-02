@@ -112,5 +112,5 @@ export const products: Product[] = [
 export const categories = [
   'Impresoras', 'Cables', 'Pantallas', 'Gaming', 
   'Monitores', 'Laptops', 'Cargadores', 'Mouse', 
-  'Teclados', 'Componentes', 'Cámaras de Seguridad'
+  'Teclados', 'Partes de pc', 'Cámaras de Seguridad'
 ];

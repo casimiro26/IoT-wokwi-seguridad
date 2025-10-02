@@ -4,6 +4,8 @@ import React from "react"
 import { useState, useEffect, useRef } from "react"
 import { X, Lock, Shield, Check, Download } from "lucide-react"
 import { useCart } from "../context/CartContext"
+import { useAuth } from "../context/AuthContext"
+import { useStore } from "../context/StoreContext"
 import jsPDF from "jspdf"
 
 interface CheckoutModalProps {
@@ -392,7 +394,10 @@ const DISTRICTS: District[] = [
 ]
 
 export const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose }) => {
-  const { items, getTotalPrice } = useCart()
+  const { items, getTotalPrice, clearCart } = useCart()
+  const { user } = useAuth()
+  const { addOrder } = useStore()
+
   const [currentStep, setCurrentStep] = useState(1)
   const [formData, setFormData] = useState({
     fullName: "",
@@ -439,16 +444,16 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose })
 
   useEffect(() => {
     if (formData.region) {
-      setProvinces(PROVINCES.filter(p => p.regionId === formData.region))
-      setFormData(prev => ({ ...prev, province: "", district: "" }))
+      setProvinces(PROVINCES.filter((p) => p.regionId === formData.region))
+      setFormData((prev) => ({ ...prev, province: "", district: "" }))
       setDistricts([])
     }
   }, [formData.region])
 
   useEffect(() => {
     if (formData.province) {
-      setDistricts(DISTRICTS.filter(d => d.provinceId === formData.province))
-      setFormData(prev => ({ ...prev, district: "" }))
+      setDistricts(DISTRICTS.filter((d) => d.provinceId === formData.province))
+      setFormData((prev) => ({ ...prev, district: "" }))
     }
   }, [formData.province])
 
@@ -473,7 +478,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose })
   }
 
   const handlePaymentMethodSelect = (method: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       paymentMethod: method,
       cardNumber: "",
@@ -496,21 +501,53 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose })
         alert("Por favor, selecciona un método de pago.")
         return
       }
-      if (formData.paymentMethod === "card" && (!formData.cardType || !formData.cardNumber || !formData.cardExpiry || !formData.cardCvv)) {
+      if (
+        formData.paymentMethod === "card" &&
+        (!formData.cardType || !formData.cardNumber || !formData.cardExpiry || !formData.cardCvv)
+      ) {
         alert("Por favor, completa todos los campos de la tarjeta.")
         return
       }
     }
     if (currentStep < 4) {
-      setCompletedSteps(prev => [...prev, currentStep])
+      setCompletedSteps((prev) => [...prev, currentStep])
       setCurrentStep(currentStep + 1)
     }
   }
 
   const handleConfirm = () => {
+    if (!user) {
+      alert("Debes iniciar sesión para confirmar el pedido")
+      return
+    }
+
+    // Create order object
+    const order = {
+      customer: {
+        name: formData.fullName,
+        email: formData.email,
+        phone: formData.phone,
+        address: fullAddress,
+        dni: formData.dni,
+      },
+      items: items.map((item) => ({
+        product: item,
+        quantity: item.quantity,
+      })),
+      total: total,
+      status: "pending" as const,
+    }
+
+    // Save order to store
+    addOrder(order)
+
     setIsConfirmed(true)
-    setCompletedSteps(prev => [...prev, 4])
-    alert("¡Pedido confirmado! Ahora puedes descargar el comprobante.")
+    setCompletedSteps((prev) => [...prev, 4])
+
+    // Clear cart after successful order
+    clearCart()
+
+    alert("¡Pedido confirmado exitosamente! Ahora puedes descargar el comprobante.")
   }
 
   const handleDownloadReceipt = () => {
@@ -538,7 +575,11 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose })
     y += 8
     doc.text(`Teléfono: ${formData.phone}`, 20, y)
     y += 8
-    doc.text(`Dirección: ${formData.district}, ${formData.province}, ${formData.region}${formData.addressDetails ? ` - ${formData.addressDetails}` : ""}`, 20, y)
+    doc.text(
+      `Dirección: ${formData.district}, ${formData.province}, ${formData.region}${formData.addressDetails ? ` - ${formData.addressDetails}` : ""}`,
+      20,
+      y,
+    )
     y += 8
     doc.text(`Método de Pago: Tarjeta (${formData.cardType})`, 20, y)
     y += 10
@@ -585,10 +626,10 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose })
   const fullAddress = `${formData.district}, ${formData.province}, ${formData.region}${formData.addressDetails ? ` - ${formData.addressDetails}` : ""}`
 
   const cardIcons: { [key: string]: string } = {
-    bcp: "https://via.placeholder.com/24?text=BCP",
-    interbank: "https://via.placeholder.com/24?text=Interbank",
-    visa: "https://via.placeholder.com/24?text=Visa",
-    paypal: "https://via.placeholder.com/24?text=PayPal",
+    bcp: "../assets/images/bcp.png",
+    interbank: "../assets/images/interb.png",
+    visa: "../assets/images/visa.png",
+    paypal: "../assets/images/peypal.png",
   }
 
   return (
@@ -617,8 +658,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose })
                     completedSteps.includes(step.number) || (step.number === 4 && isConfirmed)
                       ? "bg-green-500 text-white"
                       : step.number === currentStep
-                      ? "bg-green-500 text-white"
-                      : "bg-red-500 text-white"
+                        ? "bg-green-500 text-white"
+                        : "bg-red-500 text-white"
                   }`}
                 >
                   {completedSteps.includes(step.number) || (step.number === 4 && isConfirmed) ? (
@@ -709,9 +750,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose })
               <div className="space-y-6 max-w-lg mx-auto">
                 <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Ubicación</h3>
                 <div className="space-y-4">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Ubicación *
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Ubicación *</label>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                       <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Región</label>
@@ -723,12 +762,16 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose })
                       >
                         <option value="">Seleccionar región</option>
                         {REGIONS.map((reg) => (
-                          <option key={reg.id} value={reg.id}>{reg.name}</option>
+                          <option key={reg.id} value={reg.id}>
+                            {reg.name}
+                          </option>
                         ))}
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Provincia</label>
+                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                        Provincia
+                      </label>
                       <select
                         name="province"
                         value={formData.province}
@@ -738,12 +781,16 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose })
                       >
                         <option value="">Seleccionar provincia</option>
                         {provinces.map((prov) => (
-                          <option key={prov.id} value={prov.id}>{prov.name}</option>
+                          <option key={prov.id} value={prov.id}>
+                            {prov.name}
+                          </option>
                         ))}
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Distrito</label>
+                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                        Distrito
+                      </label>
                       <select
                         name="district"
                         value={formData.district}
@@ -753,13 +800,17 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose })
                       >
                         <option value="">Seleccionar distrito</option>
                         {districts.map((dist) => (
-                          <option key={dist.id} value={dist.name}>{dist.name}</option>
+                          <option key={dist.id} value={dist.name}>
+                            {dist.name}
+                          </option>
                         ))}
                       </select>
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Detalles adicionales (opcional)</label>
+                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                      Detalles adicionales (opcional)
+                    </label>
                     <textarea
                       name="addressDetails"
                       value={formData.addressDetails}
@@ -795,7 +846,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose })
                           key={card}
                           onClick={() => {
                             handlePaymentMethodSelect("card")
-                            setFormData(prev => ({ ...prev, cardType: card }))
+                            setFormData((prev) => ({ ...prev, cardType: card }))
                           }}
                           className={`p-3 border rounded-lg text-center flex items-center justify-center gap-2 transition-all duration-200 ${
                             formData.paymentMethod === "card" && formData.cardType === card
@@ -803,7 +854,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose })
                               : "border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
                           }`}
                         >
-                          <img src={cardIcons[card]} alt={card} className="h-5 w-5" />
+                          <img src={cardIcons[card] || "/placeholder.svg"} alt={card} className="h-5 w-5" />
                           <span className="text-sm font-medium text-gray-900 dark:text-white capitalize">{card}</span>
                           {formData.paymentMethod === "card" && formData.cardType === card && (
                             <Check className="h-4 w-4 text-green-500" />
@@ -893,33 +944,56 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose })
                 <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Confirmación</h3>
                 <div className="text-center space-y-6 bg-gradient-to-b from-white to-green-50 dark:from-gray-800 dark:to-green-900/20 rounded-2xl p-6 shadow-lg">
                   <Check className="w-12 h-12 text-green-500 mx-auto" />
-                  <p className="text-base font-medium text-gray-900 dark:text-white">¡Tu pedido está listo para confirmar!</p>
+                  <p className="text-base font-medium text-gray-900 dark:text-white">
+                    ¡Tu pedido está listo para confirmar!
+                  </p>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     Por favor, revisa los detalles de tu compra antes de confirmar.
                   </p>
                   <div className="space-y-3">
                     <h4 className="text-base font-semibold text-gray-900 dark:text-white">Resumen de la Compra</h4>
                     <div className="text-left text-sm text-gray-600 dark:text-gray-400 space-y-2 bg-white dark:bg-gray-700 p-4 rounded-lg shadow-inner">
-                      <p><strong>Nombre:</strong> {formData.fullName}</p>
-                      <p><strong>DNI:</strong> {formData.dni}</p>
-                      <p><strong>Email:</strong> {formData.email}</p>
-                      <p><strong>Teléfono:</strong> {formData.phone}</p>
-                      <p><strong>Dirección:</strong> {fullAddress}</p>
-                      <p><strong>Método de Pago:</strong> Tarjeta ({formData.cardType})</p>
+                      <p>
+                        <strong>Nombre:</strong> {formData.fullName}
+                      </p>
+                      <p>
+                        <strong>DNI:</strong> {formData.dni}
+                      </p>
+                      <p>
+                        <strong>Email:</strong> {formData.email}
+                      </p>
+                      <p>
+                        <strong>Teléfono:</strong> {formData.phone}
+                      </p>
+                      <p>
+                        <strong>Dirección:</strong> {fullAddress}
+                      </p>
+                      <p>
+                        <strong>Método de Pago:</strong> Tarjeta ({formData.cardType})
+                      </p>
                       <div>
                         <strong>Productos:</strong>
                         <ul className="list-disc pl-5 mt-1">
                           {items.map((item, index) => (
                             <li key={index}>
-                              {item.name} (x{item.quantity}) - S/ {item.price.toFixed(2)} c/u - Subtotal: S/ {(item.price * item.quantity).toFixed(2)}
+                              {item.name} (x{item.quantity}) - S/ {item.price.toFixed(2)} c/u - Subtotal: S/{" "}
+                              {(item.price * item.quantity).toFixed(2)}
                             </li>
                           ))}
                         </ul>
                       </div>
-                      <p><strong>Subtotal:</strong> S/ {subtotal.toFixed(2)}</p>
-                      <p><strong>Envío:</strong> S/ {shipping.toFixed(2)}</p>
-                      <p><strong>Total:</strong> S/ {total.toFixed(2)}</p>
-                      <p><strong>Fecha:</strong> {new Date().toLocaleString()}</p>
+                      <p>
+                        <strong>Subtotal:</strong> S/ {subtotal.toFixed(2)}
+                      </p>
+                      <p>
+                        <strong>Envío:</strong> S/ {shipping.toFixed(2)}
+                      </p>
+                      <p>
+                        <strong>Total:</strong> S/ {total.toFixed(2)}
+                      </p>
+                      <p>
+                        <strong>Fecha:</strong> {new Date().toLocaleString()}
+                      </p>
                     </div>
                     <div className="space-y-2">
                       {!isConfirmed && (

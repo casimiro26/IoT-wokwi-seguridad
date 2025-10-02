@@ -8,6 +8,8 @@ import { useAuth } from "../context/AuthContext"
 import { useCart } from "../context/CartContext"
 import { categories } from "../data/products"
 import { CartModal } from "./CartModal"
+import { FavoritesModal } from "./FavoritesModal"
+import { OrdersModal } from "./OrdersModal"
 
 interface HeaderProps {
   onCategoryChange: (category: string) => void
@@ -30,6 +32,8 @@ export const Header: React.FC<HeaderProps> = ({
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [showCartModal, setShowCartModal] = useState(false)
+  const [showFavoritesModal, setShowFavoritesModal] = useState(false)
+  const [showOrdersModal, setShowOrdersModal] = useState(false)
 
   return (
     <>
@@ -93,7 +97,16 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
 
               {/* Favorites */}
-              <button className="relative p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-300 hover:scale-110">
+              <button
+                onClick={() => {
+                  if (!user) {
+                    onShowAuth("login")
+                  } else {
+                    setShowFavoritesModal(true)
+                  }
+                }}
+                className="relative p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-300 hover:scale-110"
+              >
                 <Heart className="h-5 w-5 text-gray-600 dark:text-gray-300 group-hover:fill-red-500 transition-all duration-300" />
                 {favorites.length > 0 && (
                   <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
@@ -104,11 +117,22 @@ export const Header: React.FC<HeaderProps> = ({
 
               {/* Cart */}
               <button
-                onClick={() => setShowCartModal(true)}
-                className="relative p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-300 hover:scale-110"
+                onClick={() => {
+                  if (!user) {
+                    onShowAuth("login")
+                  } else if (user.isAdmin) {
+                    return // Admin cannot access cart
+                  } else {
+                    setShowCartModal(true)
+                  }
+                }}
+                disabled={user?.isAdmin}
+                className={`relative p-2 rounded-full transition-colors duration-300 hover:scale-110 ${
+                  user?.isAdmin ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-100 dark:hover:bg-gray-800"
+                }`}
               >
                 <ShoppingCart className="h-5 w-5 text-gray-600 dark:text-gray-300 group-hover:fill-red-500 transition-all duration-300" />
-                {getTotalItems() > 0 && (
+                {getTotalItems() > 0 && !user?.isAdmin && (
                   <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center animate-bounce">
                     {getTotalItems()}
                   </span>
@@ -120,9 +144,9 @@ export const Header: React.FC<HeaderProps> = ({
                 <button
                   onClick={() => {
                     if (!user) {
-                      onShowAuth("login") // Redirige al modal de login si no hay usuario
+                      onShowAuth("login")
                     } else {
-                      setShowUserMenu(!showUserMenu) // Muestra el menú si hay usuario
+                      setShowUserMenu(!showUserMenu)
                     }
                   }}
                   className="flex items-center gap-2 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-300 hover:scale-110"
@@ -132,31 +156,70 @@ export const Header: React.FC<HeaderProps> = ({
                 </button>
 
                 {showUserMenu && user && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 py-2 z-50 animate-slide-down">
-                    <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">{user.name}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{user.email}</p>
+                  <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 py-2 z-50 animate-slide-down">
+                    <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-full bg-red-500 flex items-center justify-center">
+                          <User className="w-6 h-6 text-white" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-gray-900 dark:text-white">{user.name}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{user.email}</p>
+                          <p className="text-xs text-red-600 dark:text-red-400 font-medium mt-1">
+                            {user.isAdmin ? "Administrador" : "Cliente"}
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                    {user.isAdmin && (
+
+                    {user.isAdmin ? (
                       <button
                         onClick={() => {
                           onShowAdmin()
                           setShowUserMenu(false)
                         }}
-                        className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-300 hover:scale-[1.02]"
+                        className="w-full text-left px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-300 flex items-center gap-2"
                       >
+                        <span className="text-lg">⚙️</span>
                         Dashboard Admin
                       </button>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => {
+                            setShowOrdersModal(true)
+                            setShowUserMenu(false)
+                          }}
+                          className="w-full text-left px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-300 flex items-center gap-2"
+                        >
+                          <ShoppingCart className="w-4 h-4" />
+                          Mis Pedidos
+                        </button>
+                        <button
+                          onClick={() => {
+                            setShowFavoritesModal(true)
+                            setShowUserMenu(false)
+                          }}
+                          className="w-full text-left px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-300 flex items-center gap-2"
+                        >
+                          <Heart className="w-4 h-4" />
+                          Mis Favoritos
+                        </button>
+                      </>
                     )}
-                    <button
-                      onClick={() => {
-                        logout()
-                        setShowUserMenu(false)
-                      }}
-                      className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-300 hover:scale-[1.02]"
-                    >
-                      Cerrar Sesión
-                    </button>
+
+                    <div className="border-t border-gray-200 dark:border-gray-700 mt-2 pt-2">
+                      <button
+                        onClick={() => {
+                          logout()
+                          setShowUserMenu(false)
+                        }}
+                        className="w-full text-left px-4 py-3 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors duration-300 flex items-center gap-2 font-medium"
+                      >
+                        <span className="text-lg">🚪</span>
+                        Cerrar Sesión
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -201,7 +264,11 @@ export const Header: React.FC<HeaderProps> = ({
       </header>
 
       {/* Cart Modal */}
-      <CartModal isOpen={showCartModal} onClose={() => setShowCartModal(false)} />
+      {!user?.isAdmin && <CartModal isOpen={showCartModal} onClose={() => setShowCartModal(false)} />}
+
+      <FavoritesModal isOpen={showFavoritesModal} onClose={() => setShowFavoritesModal(false)} />
+
+      {user && !user.isAdmin && <OrdersModal isOpen={showOrdersModal} onClose={() => setShowOrdersModal(false)} />}
     </>
   )
 }
