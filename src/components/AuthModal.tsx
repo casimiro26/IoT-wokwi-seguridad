@@ -73,9 +73,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ type, isOpen, onClose, onS
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-4xl transform animate-in slide-in-from-bottom-4 duration-300 flex" style={{ minHeight: '500px' }}>
           {/* Left Page (Cover with Background) */}
-          <div className="w-1/2 bg-red-600 p-8 flex flex-col justify-between rounded-l-2xl" style={{ backgroundImage: 'url(https://example.com/robot-store-bg.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
+          <div className="w-1/2 bg-red-600 p-8 flex flex-col justify-between rounded-l-2xl" style={{ backgroundImage: 'url(https://tecsisco.com.co/wp-content/uploads/2024/10/Tiendas-de-tecnologia-en-Bogota-930x567.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
             <div className="bg-black/50 p-6 rounded-lg">
-              <h2 className="text-5xl font-bold text-white mb-4 animate-text-glow">Sr. Robot</h2>
+              <h2 className="text-5xl font-bold text-white mb-4 animate-red-flash">Sr. Robot</h2>
               <p className="text-xl text-white animate-text-glow">Tu destino para tecnología de vanguardia en Huánuco, Perú. Descubre accesorios innovadores con envíos rápidos y soporte dedicado.</p>
             </div>
             <div className="text-right">
@@ -110,12 +110,36 @@ export const AuthModal: React.FC<AuthModalProps> = ({ type, isOpen, onClose, onS
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-4xl transform animate-in slide-in-from-bottom-4 duration-300 flex" style={{ minHeight: '500px' }}>
         {/* Left Page (Cover) */}
-        <div className="w-1/2 bg-red-600 text-white p-8 flex flex-col justify-between rounded-l-2xl" style={{ backgroundImage: 'url(https://example.com/robot-store-bg.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
-          <div>
-            <h2 className="text-5xl font-bold mb-6 animate-text-glow">Sr. Robot</h2>
-            <p className="text-xl animate-text-glow">Únete a nuestra comunidad tecnológica</p>
+        <div className="w-1/2 p-8 flex flex-col justify-between rounded-l-2xl relative" style={{ backgroundImage: 'url(https://tse4.mm.bing.net/th/id/OIP.PugUO0VATzrUkkvPR5QF_QHaHf?cb=12&rs=1&pid=ImgDetMain&o=7&rm=3)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
+          <div className="absolute inset-0 bg-red-600 opacity-50"></div>
+          <div className="relative z-10">
+            <h2 className="text-5xl font-bold mb-6 text-white animate-red-flash">Sr. Robot</h2>
+            <p className="text-xl text-white animate-text-sequence animate-red-flash">
+              {Array.from('Únete a nuestra comunidad tecnológica').map((char, index) => (
+                <span key={index}>{char}</span>
+              ))}
+            </p>
+            {/* Product placeholders */}
+            <div className="mt-6 space-y-4">
+              <div className="bg-white/20 p-4 rounded-lg flex items-center gap-4 animate-fade-in">
+                <div className="w-12 h-12 bg-gray-200 rounded" style={{ backgroundImage: 'url(../assets/images/lap.png)', backgroundSize: 'contain', backgroundRepeat: 'no-repeat', backgroundPosition: 'center' }}></div>
+                <span className="text-white">Laptops</span>
+              </div>
+              <div className="bg-white/20 p-4 rounded-lg flex items-center gap-4 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+                <div className="w-12 h-12 bg-gray-200 rounded" style={{ backgroundImage: 'url(https://media.falabella.com.pe/falabellaPE/119485995_01/width=240,height=240,quality=70,format=webp,fit=pad)', backgroundSize: 'contain', backgroundRepeat: 'no-repeat', backgroundPosition: 'center' }}></div>
+                <span className="text-white">Impresoras</span>
+              </div>
+              <div className="bg-white/20 p-4 rounded-lg flex items-center gap-4 animate-fade-in" style={{ animationDelay: '0.4s' }}>
+                <div className="w-12 h-12 bg-gray-200 rounded" style={{ backgroundImage: 'url(https://th.bing.com/th/id/OIP.TEvo6NMxHsfZX2Kex5o28AAAAA?w=119&h=104&c=7&bgcl=d2209d&r=0&o=6&cb=12&dpr=1.3&pid=13.1)', backgroundSize: 'contain', backgroundRepeat: 'no-repeat', backgroundPosition: 'center' }}></div>
+                <span className="text-white">Monitores</span>
+              </div>
+              <div className="bg-white/20 p-4 rounded-lg flex items-center gap-4 animate-fade-in" style={{ animationDelay: '0.6s' }}>
+                <div className="w-12 h-12 bg-gray-200 rounded" style={{ backgroundImage: 'url(https://http2.mlstatic.com/D_NQ_NP_862559-MLU72955963247_112023-O.webp)', backgroundSize: 'contain', backgroundRepeat: 'no-repeat', backgroundPosition: 'center' }}></div>
+                <span className="text-white">Teclados</span>
+              </div>
+            </div>
           </div>
-          <div className="text-right">
+          <div className="text-right relative z-10">
           </div>
         </div>
         {/* Right Page (Content) */}
@@ -127,7 +151,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ type, isOpen, onClose, onS
             <X className="w-7 h-7 text-gray-600 dark:text-gray-300 animate-text-glow" />
           </button>
           <h2 className="text-4xl font-bold text-red-600 dark:text-red-400 mb-8 animate-text-glow">
-            {type === 'login' ? 'Iniciar Sesión' : 'Regístrate en Sr. Robot'}
+            {type === 'login' ? 'Iniciar Sesión' : 'Regístrate'}
           </h2>
           {type === 'login' && (
             <div className="p-4 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 mb-6">

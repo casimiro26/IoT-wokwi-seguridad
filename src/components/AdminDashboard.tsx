@@ -518,7 +518,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = memo(({ isOpen, onC
                       "Cargadores",
                       "Mouse",
                       "Teclados",
-                      "Componentes",
+                      "Partes de pc",
                       "Cámaras de Seguridad",
                     ].map((category) => (
                       <button
@@ -632,7 +632,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = memo(({ isOpen, onC
                           "Cargadores",
                           "Mouse",
                           "Teclados",
-                          "Componentes",
+                          "Partes de pc",
                           "Cámaras de Seguridad",
                         ].map((cat) => (
                           <option key={cat} value={cat}>
@@ -759,7 +759,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = memo(({ isOpen, onC
                           "Cargadores",
                           "Mouse",
                           "Teclados",
-                          "Componentes",
+                          "Partes de pc",
                           "Cámaras de Seguridad",
                         ].map((cat) => (
                           <option key={cat} value={cat}>
@@ -986,7 +986,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = memo(({ isOpen, onC
                         {showOrderDetails.items.map((item, index) => (
                           <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                             <img
-                              src={item.product.image || "/placeholder.svg"}
+                              src={item.product.image || "../assets/images/s-r.png"}
                               alt={item.product.name}
                               className="w-16 h-16 object-cover rounded"
                             />
